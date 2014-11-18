@@ -8,7 +8,7 @@
 #include <sys/ioctl.h>
 #include "k.h"
 
-static size_t http_response_callback(char *d, size_t n, size_t l,void *p);
+static size_t http_response_callback(char *d,size_t n, size_t l,void *p);
 static K http_message_callback(int fd);
 
 //*******************************************
@@ -195,7 +195,7 @@ K postAsync(K callback, K url, K payload, K headers) {
 	//if(callback->t != KC) return krr("type");
 	if(url->t != KC) return krr("type");
 	if(payload && payload->t != KC) return krr("type");
-	if(headers && headers->t != KC) return krr("type");
+	if(headers && headers->t != 0) return krr("type");
 
 	//Initialization
 	if(!http_initialized){
@@ -207,11 +207,6 @@ K postAsync(K callback, K url, K payload, K headers) {
 		pthread_create(&http_loop_thread, NULL, http_request_loop, NULL);
 		http_initialized = 1;
 	}
-
-	//parse data to create a new request
-	//char *request_callback = malloc(sizeof(char) * (callback->n + 1));
-	//strncpy(request_callback, kC(callback), callback->n);
-	//request_callback[callback->n] = '\0';
 
 	char *request_url = malloc(sizeof(char) * (url->n + 1));
 	strncpy(request_url, kC(url), url->n);
@@ -244,4 +239,5 @@ K postAsync(K callback, K url, K payload, K headers) {
 	int rc = write(http_input_fd[1], &new_request, sizeof(struct request *));
 	return (K) 0;
 }
-K getAsync(K callback, K url) { R postAsync(callback, url, NULL, NULL); }
+K getAsync(K callback,K url){R postAsync(callback,url,NULL,NULL);}
+K getAsynch(K callback,K url,K headers){R postAsync(callback,url,NULL,headers);}
