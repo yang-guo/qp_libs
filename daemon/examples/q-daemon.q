@@ -1,4 +1,4 @@
-.qp.require["qp_core"]
+.qp.require["daemon"]
 
 \p 1235
 
