@@ -1,18 +1,5 @@
 \d .timer
-id:0;
-triggers:();
-getNextId:{curid:id;id+::1;curid};
-add:{[fn;interval] curid:getNextId[]; triggers,::enlist (curid;fn;interval;interval);curid};
-remove:{[tid] triggers::triggers _triggers[;0]?tid;tid};
-//orig:.z.ts;
-.z.ts:{
-	if[0=count triggers;:0];
-	triggers::.[triggers;(::;3);-;100];
-	execidx:where triggers[;3]<=0;
-	if[0=count execidx;:0];
-	.[triggers;(execidx;1);@;::]; //run functions that we have hit the time for
-	triggers::.[triggers;(execidx;3);:;triggers[;2] execidx];
- };
+i:0;t:();nxt:{id:i;i+::1;id};add:{[fn;int]id:nxt 0;t,::(,)(id;fn;int;int);id};rm:{[id]t::t _t[;0]?id;id}
+.z.ts:{if[0=count t;:0];t::.[t;(::;3);-;100];id:(&:)t[::;3]<=0;if[0=count id;:0];.[t;(id;1);@;::];t::.[t;(id;3);:;t[id;2]];}
 \t 100
-
 \d .
