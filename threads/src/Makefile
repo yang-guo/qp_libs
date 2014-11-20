@@ -3,7 +3,7 @@ $(error run ./configure first)
 endif
 include ./config.mk
 
-TARGETS 	   := threads
+TARGETS 	   := threads threadpool
 OUTPUT 		   := threads.so
 LIBFILES	   := pthread
 
