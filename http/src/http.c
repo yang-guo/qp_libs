@@ -56,8 +56,8 @@ static void http_remove_request(struct request *req) {
 	free(req->payload);
 	curl_slist_free_all(req->header_list);
 	free(req->data);
-	//free(req->callback);
-	//r0(req->callback);
+	r0(req->callback);
+	free(req);
 }
 
 //*******************************************
@@ -108,16 +108,13 @@ static size_t http_response_callback(char *d, size_t n, size_t l,void *p) {
 }
 
 static K http_message_callback(int fd) {
-	int num_read;
-	struct request *req;
+	int num_read;struct request *req;
 
 	//Read the request that has been triggered and write back
 	num_read = read(fd, &req, sizeof(struct request *));
 	K data = knk(1,kpn(req->data,req->data_size));
 	K result = dot(req->callback,data);
 	r0(data);
-
-	//We are done with the request, so we need to clean up
 	http_remove_request(req);
 
 	return result;
@@ -142,26 +139,15 @@ static void *http_request_loop(void *args) {
 	CURLM *curl_multi = curl_multi_init();
 	curl_multi_perform(curl_multi, &curls_running);
 
-	//Main request loop
 	while(1) {
 		FD_ZERO(&read_set);
-
-		//Get file handles - maybe handle fdset failure
 		rc = curl_multi_fdset(curl_multi, &read_set, &write_set, &error_set, &maxfd);
 		maxfd = (maxfd > http_input_fd[0]) ? maxfd : http_input_fd[0];
-
-
 		FD_SET(http_input_fd[0], &read_set);
-
-  		//define the timeout
-  		timeout.tv_sec = 0;
-  		timeout.tv_usec = 10000;		
-
+  		timeout.tv_sec = 0;timeout.tv_usec = 10000;		
   		rc = select(maxfd + 1, &read_set, NULL, NULL, &timeout);
-
   		switch(rc){
-  			case -1:
-  				break;
+  			case -1: break;
   			case 0:
   			default:
   				if(FD_ISSET(http_input_fd[0], &read_set)) {
@@ -170,7 +156,6 @@ static void *http_request_loop(void *args) {
   				} else {
   					while((msg = curl_multi_info_read(curl_multi, &msgs_in_queue))) {
   						if(msg->msg == CURLMSG_DONE) {
-  							//Reading for writing back in main thread
   							CURL *curl = msg->easy_handle;
   							curl_easy_getinfo(curl, CURLINFO_PRIVATE, &req);
   							rc = write(http_output_fd[1], &req, sizeof(struct request *));
@@ -178,9 +163,7 @@ static void *http_request_loop(void *args) {
   							//OTHER SHIT (ERROR)
   						}
   					}
-  					
   				}
-
   				curl_multi_perform(curl_multi, &curls_running);
   				break;
   		}
@@ -231,11 +214,7 @@ K postAsync(K callback, K url, K payload, K headers) {
 		}
 	}
 
-	struct request *new_request = 
-			http_add_request(callback,
-							request_url,
-							request_payload,
-							request_headers);
+	struct request *new_request = http_add_request(callback,request_url,request_payload,request_headers);
 	int rc = write(http_input_fd[1], &new_request, sizeof(struct request *));
 	return (K) 0;
 }
