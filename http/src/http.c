@@ -33,7 +33,7 @@ Z V curlrm(CURLM* curlm,CURL* c){curl_multi_remove_handle(curlm,c);curl_easy_cle
 
 Z size_t rscb(S d,size_t n,size_t l,V* p){
 	RQ* rq=(RQ*)p;size_t sz=n*l;size_t nsz=rq->n+sz;
-	rq->data=realloc(rq->data,nsz);memcpy(rq->data+rq->n,d,sz);rq->n=nsz;R nsz;}
+	rq->data=realloc(rq->data,nsz);memcpy(rq->data+rq->n,d,sz);rq->n=nsz;R sz;}
 
 Z K rqcb(I fd){
 	RQ* rq;I n=read(fd,&rq,sizeof(RQ*));
@@ -54,7 +54,7 @@ Z void* rqloop(void* args){
 				if(FD_ISSET(rqin[0],&rds)){I nread=read(rqin[0],&rq,sizeof(RQ*));curladd(curlm,rq);}
 				else{
 					while((msg=curl_multi_info_read(curlm,&queued))){
-						if(msg->msg==CURLMSG_DONE){CURL* c=msg->easy_handle;go(c,PRIVATE,&rq);rc=write(rqout[1],&rq,sizeof(RQ*));}}}
+						if(msg->msg==CURLMSG_DONE){CURL* c=msg->easy_handle;go(c,PRIVATE,&rq);rc=write(rqout[1],&rq,sizeof(RQ*));curlrm(curlm,c);}}}
 				curl_multi_perform(curlm,&nrun);break;}}}
 
 K init(K x){
