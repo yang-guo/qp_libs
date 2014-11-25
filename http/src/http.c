@@ -8,68 +8,216 @@
 #include <sys/ioctl.h>
 #include "k.h"
 
-#define so(c,o,v) curl_easy_setopt(c,CURLOPT_##o,v)
-#define go(c,o,v) curl_easy_getinfo(c,CURLOPT_##o,v)
-Z size_t rscb(S d,size_t n,size_t l,V* p);Z K rqcb(I fd);
-typedef struct curl_slist CL;Z pthread_t loop;Z I rqin[2],rqout[2],initd;
+static size_t http_response_callback(char *d,size_t n, size_t l,void *p);
+static K http_message_callback(int fd);
 
-typedef struct RQ{S url;S pay;CL* header;S data; size_t n;C error[CURL_ERROR_SIZE];K cb;LIST_ENTRY(RQ) p;} RQ;
-Z LIST_HEAD(RQH,RQ)RQH;Z void rqinit(){LIST_INIT(&RQH);}
+//*******************************************
+// Request Functions
+//*******************************************
+//Data structure passed to CURLs to get data
+struct request {
+	//http parts
+	char *url;
+	char *payload;
+	struct curl_slist *header_list;
+	char *data;
+	size_t data_size;
+	char error_buffer[CURL_ERROR_SIZE];
+	K callback;
+	LIST_ENTRY(request) pointers;
+};
+static LIST_HEAD(requests_head, request) requests_head;
 
-Z RQ* rqadd(K cb,S url,S pay,CL* header){
-	RQ* rqnew=malloc(sizeof(RQ));
-	r1(cb);rqnew->cb=cb;rqnew->url=url;rqnew->pay=pay?pay:NULL;rqnew->header=header?header:NULL;rqnew->data=NULL;rqnew->n=0;
-	LIST_INSERT_HEAD(&RQH,rqnew,p);R rqnew;}
-Z V rqrm(RQ* rq){r0(rq->cb);free(rq->url);free(rq->pay);curl_slist_free_all(rq->header);free(rq->data);LIST_REMOVE(rq,p);free(rq);}
+static void http_init_request() {
+	LIST_INIT(&requests_head);
+}
 
-Z V curladd(CURLM* curlm,RQ* rq){
-	CURL* c=curl_easy_init();
-	so(c,URL,rq->url);so(c,FOLLOWLOCATION,1L);so(c,HEADER,0L);so(c,SSL_VERIFYPEER,0L);so(c,SSL_VERIFYHOST,0L);
-	so(c,WRITEFUNCTION,rscb);so(c,WRITEDATA,rq);so(c,PRIVATE,rq);so(c,ERRORBUFFER,rq->error);
-	if(rq->pay){so(c,POST,1L);so(c,POSTFIELDS,rq->pay);so(c,POSTFIELDSIZE,strlen(rq->pay));}
-	if(rq->header){so(c,HTTPHEADER,rq->header);}
-	curl_multi_add_handle(curlm,c);}
-Z V curlrm(CURLM* curlm,CURL* c){curl_multi_remove_handle(curlm,c);curl_easy_cleanup(c);}
+static struct request *http_add_request(K callback, char *url,
+	char *payload, struct curl_slist* headers) {
+	
+	struct request *new_request = malloc(sizeof(struct request));
+	//load up parameters, check if some exist
+	r1(callback);
+	new_request->callback = callback;
+	new_request->url = url;
+	new_request->payload = (payload) ? payload : NULL;
+	new_request->header_list = (headers) ? headers : NULL;
+	
+	new_request->data = NULL;
+	new_request->data_size = 0;
 
-Z size_t rscb(S d,size_t n,size_t l,V* p){
-	RQ* rq=(RQ*)p;size_t sz=n*l;size_t nsz=rq->n+sz;
-	rq->data=realloc(rq->data,nsz);memcpy(rq->data+rq->n,d,sz);rq->n=nsz;R sz;}
+	LIST_INSERT_HEAD(&requests_head, new_request, pointers);
+	return new_request;
+}
 
-Z K rqcb(I fd){
-	RQ* rq;I n=read(fd,&rq,sizeof(RQ*));
-	K data=knk(1,kpn(rq->data,rq->n));K res=dot(rq->cb,data);
-	r0(data);rqrm(rq);R res;}
+static void http_remove_request(struct request *req) {
+	LIST_REMOVE(req, pointers);
+	free(req->url);
+	free(req->payload);
+	curl_slist_free_all(req->header_list);
+	free(req->data);
+	r0(req->callback);
+	free(req);
+}
 
-Z void* rqloop(void* args){
-	fd_set rds,wrs,errs;struct timeval to;I nrun,queued,maxfd,rc;CURLMsg* msg;RQ* rq;
-	curl_global_init(CURL_GLOBAL_ALL);CURLM* curlm=curl_multi_init();curl_multi_perform(curlm,&nrun);
-	while(1){
-		FD_ZERO(&rds);FD_SET(rqin[0],&rds);
-		rc=curl_multi_fdset(curlm,&rds,&wrs,&errs,&maxfd);maxfd=(maxfd>rqin[0])?maxfd:rqin[0];
-		to.tv_sec=0;to.tv_usec=10000;rc=select(maxfd+1,&rds,NULL,NULL,&to);
-		SW(rc){
-			case -1: break;
-			case 0:
-			default:
-				if(FD_ISSET(rqin[0],&rds)){I nread=read(rqin[0],&rq,sizeof(RQ*));curladd(curlm,rq);}
-				else{
-					while((msg=curl_multi_info_read(curlm,&queued))){
-						if(msg->msg==CURLMSG_DONE){CURL* c=msg->easy_handle;go(c,PRIVATE,&rq);rc=write(rqout[1],&rq,sizeof(RQ*));curlrm(curlm,c);}}}
-				curl_multi_perform(curlm,&nrun);break;}}}
+//*******************************************
+// CURL Functions
+//*******************************************
+//Initializes a curl into the multihandle
+static void http_init_curl(CURLM *curl_m, struct request *req) {
+	CURL* c = curl_easy_init();
 
-K init(K x){
-	if(!initd){if(pipe(rqin))R krr("pipe");if(pipe(rqout))R krr("pipe");
-	rqinit();sd1(rqout[0],rqcb);pthread_create(&loop,NULL,rqloop,NULL);initd=1;}R(K)0;}
+	curl_easy_setopt(c, CURLOPT_URL, req->url);
+	curl_easy_setopt(c, CURLOPT_FOLLOWLOCATION, 1L);
+	curl_easy_setopt(c, CURLOPT_HEADER, 0L);
+	curl_easy_setopt(c, CURLOPT_SSL_VERIFYPEER, 0L);
+	curl_easy_setopt(c, CURLOPT_SSL_VERIFYHOST, 0L);
+	curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, http_response_callback);
+	curl_easy_setopt(c, CURLOPT_WRITEDATA, req);
+	curl_easy_setopt(c, CURLOPT_PRIVATE, req);
+	curl_easy_setopt(c, CURLOPT_ERRORBUFFER, req->error_buffer);
 
-K postAsync(K cb,K url,K pay,K header){
-	if(url->t!=KC)R krr("type");if(pay&&pay->t!=KC)R krr("type");if(header&&header->t!=0)R krr("type");
-	S rqpay=NULL;CL* rqheader=NULL;
-	S rqurl=malloc(sizeof(C)*(url->n+1));strncpy(rqurl,kC(url),url->n);rqurl[url->n]=0;
-	if(pay&&pay->n){S rqpay=malloc(sizeof(C)&(pay->n+1));strncpy(rqpay,kC(pay),pay->n);rqpay[pay->n]=0;}
-	if(header&&!header->t){
-		for(I i=0;i<header->n;++i){
-			I sn=kK(header)[i]->n;S str=malloc(sizeof(char)*(sn+1));strncpy(str,kC(kK(header)[i]),sn);str[sn]=0;
-			rqheader=curl_slist_append(rqheader,str);free(str);}}
-	RQ* rqnew=rqadd(cb,rqurl,rqpay,rqheader);I rc=write(rqin[1],&rqnew,sizeof(RQ*));R(K)0;}
-K getAsync(K cb,K url){R postAsync(cb,url,NULL,NULL);}
-K getAsynch(K cb,K url,K header){R postAsync(cb,url,NULL,header);}
+	if(req->payload) {
+		curl_easy_setopt(c, CURLOPT_POST, 1L);
+		curl_easy_setopt(c, CURLOPT_POSTFIELDS,req->payload);
+		curl_easy_setopt(c, CURLOPT_POSTFIELDSIZE, strlen(req->payload));		
+	}
+	if(req->header_list) {
+		curl_easy_setopt(c, CURLOPT_HTTPHEADER, req->header_list);
+	}
+
+	curl_multi_add_handle(curl_m, c);
+}
+
+static void http_remove_curl(CURLM *curl_m, CURL* curl) {
+	curl_multi_remove_handle(curl_m, curl);
+	curl_easy_cleanup(curl);
+}
+
+//*******************************************
+// Callbacks
+//*******************************************
+//Callback when http returns data via curl
+static size_t http_response_callback(char *d, size_t n, size_t l,void *p) {
+	struct request *req = (struct request*) p;
+	int new_size = req->data_size + (n * l);
+	req->data = realloc(req->data, new_size);
+	memcpy(req->data + req->data_size, d, n * l);
+	req->data_size = new_size;
+	return n * l;
+}
+
+static K http_message_callback(int fd) {
+	int num_read;struct request *req;
+
+	//Read the request that has been triggered and write back
+	num_read = read(fd, &req, sizeof(struct request *));
+	K data = knk(1,kpn(req->data,req->data_size));
+	K result = dot(req->callback,data);
+	r0(data);
+	http_remove_request(req);
+
+	return result;
+}
+
+//*******************************************
+// Request Loop
+//*******************************************
+int http_input_fd[2];
+int http_output_fd[2];
+pthread_t http_loop_thread;
+int http_initialized = 0;
+
+static void *http_request_loop(void *args) {
+	fd_set read_set, write_set, error_set;
+	struct timeval timeout;
+	int rc, curls_running, msgs_in_queue, maxfd;
+	CURLMsg* msg;
+	struct request* req;
+
+	curl_global_init(CURL_GLOBAL_ALL);
+	CURLM *curl_multi = curl_multi_init();
+	curl_multi_perform(curl_multi, &curls_running);
+
+	while(1) {
+		FD_ZERO(&read_set);
+		rc = curl_multi_fdset(curl_multi, &read_set, &write_set, &error_set, &maxfd);
+		maxfd = (maxfd > http_input_fd[0]) ? maxfd : http_input_fd[0];
+		FD_SET(http_input_fd[0], &read_set);
+  		timeout.tv_sec = 0;timeout.tv_usec = 10000;		
+  		rc = select(maxfd + 1, &read_set, NULL, NULL, &timeout);
+  		switch(rc){
+  			case -1: break;
+  			case 0:
+  			default:
+  				if(FD_ISSET(http_input_fd[0], &read_set)) {
+  					int num_read = read(http_input_fd[0], &req, sizeof(struct request *));
+  					http_init_curl(curl_multi, req);
+  				} else {
+  					while((msg = curl_multi_info_read(curl_multi, &msgs_in_queue))) {
+  						if(msg->msg == CURLMSG_DONE) {
+  							CURL *curl = msg->easy_handle;
+  							curl_easy_getinfo(curl, CURLINFO_PRIVATE, &req);
+  							rc = write(http_output_fd[1], &req, sizeof(struct request *));
+  							http_remove_curl(curl_multi,curl);
+  						} else {
+  							//OTHER SHIT (ERROR)
+  						}
+  					}
+  				}
+  				curl_multi_perform(curl_multi, &curls_running);
+  				break;
+  		}
+	}
+}
+
+//*******************************************
+// Public Functions
+//*******************************************
+K postAsync(K callback, K url, K payload, K headers) {
+	//Type checks - maybe build these into macross
+	//if(callback->t != KC) return krr("type");
+	if(url->t != KC) return krr("type");
+	if(payload && payload->t != KC) return krr("type");
+	if(headers && headers->t != 0) return krr("type");
+
+	//Initialization
+	if(!http_initialized){
+		if(pipe(http_input_fd)) return krr("pipe");
+		if(pipe(http_output_fd)) return krr("pipe");
+		http_init_request();
+
+		sd1(http_output_fd[0], http_message_callback);
+		pthread_create(&http_loop_thread, NULL, http_request_loop, NULL);
+		http_initialized = 1;
+	}
+
+	char *request_url = malloc(sizeof(char) * (url->n + 1));
+	strncpy(request_url, kC(url), url->n);
+	request_url[url->n] = '\0';
+
+	char *request_payload = NULL;
+	if(payload && payload->n) {
+		char *request_payload = malloc(sizeof(char) * (payload->n + 1));
+		strncpy(request_payload, kC(url), payload->n);
+		request_payload[payload->n] = '\0';
+	}
+
+	//TODO: change this as this does way too may copies for no reason
+	struct curl_slist *request_headers = NULL;
+	if(headers && !headers->t) {
+		for(int i = 0; i < headers->n; ++i) {
+			char *str =  malloc(sizeof(char) * (kK(headers)[i]->n + 1));
+			strncpy(str, kC(kK(headers)[i]), kK(headers)[i]->n);
+			str[kK(headers)[i]->n] = '\0';
+			request_headers = curl_slist_append(request_headers, str);
+			free(str);
+		}
+	}
+
+	struct request *new_request = http_add_request(callback,request_url,request_payload,request_headers);
+	int rc = write(http_input_fd[1], &new_request, sizeof(struct request *));
+	return (K) 0;
+}
+K getAsync(K callback,K url){R postAsync(callback,url,NULL,NULL);}
+K getAsynch(K callback,K url,K headers){R postAsync(callback,url,NULL,headers);}
