@@ -62,14 +62,14 @@ K init(K x){
 	rqinit();sd1(rqout[0],rqcb);pthread_create(&loop,NULL,rqloop,NULL);initd=1;}R(K)0;}
 
 K postAsync(K cb,K url,K pay,K header){
-	if(url->t!=KC)R krr("type");if(pay&&pay->t!=KC)R krr("type");if(header&&header->t!=0)R krr("type");
+	if(url->t!=KC)R krr("type");if(pay&&pay->t!=KC)R krr("type");
 	S rqpay=NULL;CL rqheader=NULL;
 	S rqurl=malloc(sizeof(C)*(url->n+1));strncpy(rqurl,kC(url),url->n);rqurl[url->n]=0;
-	if(pay&&pay->n){S rqpay=malloc(sizeof(C)&(pay->n+1));strncpy(rqpay,kC(pay),pay->n);rqpay[pay->n]=0;}
+	if(pay&&pay->n){S rqpay=malloc(sizeof(C)*(pay->n+1));strncpy(rqpay,kC(pay),pay->n);rqpay[pay->n]=0;}
 	if(header&&!header->t){
-		for(I i=0;i<header->n;++i){
+		for(I i=0;i<header->n;++i){if(kK(header)[i]->t==KC){
 			I sn=kK(header)[i]->n;S str=malloc(sizeof(char)*(sn+1));strncpy(str,kC(kK(header)[i]),sn);str[sn]=0;
-			rqheader=curl_slist_append(rqheader,str);free(str);}}
+			rqheader=curl_slist_append(rqheader,str);free(str);}}}
 	RQ rq=rqadd(cb,rqurl,rqpay,rqheader);I rc=write(rqin[1],&rq,sizeof(RQ));R(K)0;}
 K getAsync(K cb,K url){R postAsync(cb,url,NULL,NULL);}
 K getAsynch(K cb,K url,K header){R postAsync(cb,url,NULL,header);}
