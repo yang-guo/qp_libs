@@ -65,7 +65,7 @@ K postAsync(K cb,K url,K pay,K header){
 	if(url->t!=KC)R krr("type");if(pay&&pay->t!=KC)R krr("type");
 	S rqpay=NULL;CL rqheader=NULL;
 	S rqurl=malloc(sizeof(C)*(url->n+1));strncpy(rqurl,kC(url),url->n);rqurl[url->n]=0;
-	if(pay&&pay->n){S rqpay=malloc(sizeof(C)*(pay->n+1));strncpy(rqpay,kC(pay),pay->n);rqpay[pay->n]=0;}
+	if(pay&&pay->n){rqpay=malloc(sizeof(C)*(pay->n+1));strncpy(rqpay,kC(pay),pay->n);rqpay[pay->n]=0;}
 	if(header&&!header->t){
 		for(I i=0;i<header->n;++i){if(kK(header)[i]->t==KC){
 			I sn=kK(header)[i]->n;S str=malloc(sizeof(char)*(sn+1));strncpy(str,kC(kK(header)[i]),sn);str[sn]=0;
