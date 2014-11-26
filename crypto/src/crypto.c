@@ -11,9 +11,9 @@
 //*******************************************
 K hmac_sha1(K x,K y){
 	unsigned char* digest;
-	digest = HMAC(EVP_sha1(), kC(y), y->n, kC(x), x->n, NULL, NULL);
-	K signature = kpn(digest, SHA_DIGEST_LENGTH);
-	return signature;
+	digest=HMAC(EVP_sha1(),kC(y),y->n,kC(x),x->n,NULL,NULL);
+	K signature=kpn(digest, SHA_DIGEST_LENGTH);
+	R signature;
 }
 
 K hmac_sha256(K x,K y){
