@@ -16,3 +16,9 @@ The parameters are
 * url(_s_) request target, e.g. "http://www.google.com"
 * payload(_s_) payload on POST requests
 * header(_S_) headers that will be added to the request
+
+## Examples
+
+```q
+.http.getAsync[{xx::(x;y;z)};"http://www.google.com"] //returns html of google to callback
+```
