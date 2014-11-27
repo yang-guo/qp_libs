@@ -10,7 +10,7 @@ There are three main functions
 * getAsynch[callback,url,header]
 
 The parameters are
-* callback - (function[x;y;z]) takes in 3 parameters of (result,statuscode,curlcode)
-* url - (string) request target, e.g. "http://www.google.com"
-* payload - (string) payload on POST requests
-* header - (list of strings) headers that will be added to the request
+* callback(_fn[x;y;z]_) - takes in 3 parameters of (result,statuscode,curlcode)
+* url(_s_) - request target, e.g. "http://www.google.com"
+* payload(_s_) - payload on POST requests
+* header(_S_) - headers that will be added to the request
