@@ -13,7 +13,7 @@
 Z size_t rscb(S d,size_t n,size_t l,V* p);Z K rqcb(I fd);
 typedef struct curl_slist* CL;Z pthread_t loop;Z I rqin[2],rqout[2],initd;
 
-typedef struct RQS{S url;S pay;CL header;S data; size_t n;C error[CURL_ERROR_SIZE];K cb;LIST_ENTRY(RQS) p;}*RQ;
+typedef struct RQS{S url;S pay;CL header;S data;size_t n;C error[CURL_ERROR_SIZE];K cb;LIST_ENTRY(RQS) p;}*RQ;
 Z LIST_HEAD(RQH,RQS)RQH;Z V rqinit(){LIST_INIT(&RQH);}
 
 Z RQ rqadd(K cb,S url,S pay,CL header){
