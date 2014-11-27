@@ -13,12 +13,12 @@
 Z size_t rscb(S d,size_t n,size_t l,V* p);Z K rqcb(I fd);
 typedef struct curl_slist* CL;Z pthread_t loop;Z I rqin[2],rqout[2],initd;
 
-typedef struct RQS{S url;S pay;CL header;S data;size_t n;C error[CURL_ERROR_SIZE];K cb;LIST_ENTRY(RQS) p;}*RQ;
+typedef struct RQS{S url;S pay;CL header;S data;size_t n;J rc;J ec;C error[CURL_ERROR_SIZE];K cb;LIST_ENTRY(RQS) p;}*RQ;
 Z LIST_HEAD(RQH,RQS)RQH;Z V rqinit(){LIST_INIT(&RQH);}
 
 Z RQ rqadd(K cb,S url,S pay,CL header){
 	RQ rq=malloc(sizeof(struct RQS));
-	r1(cb);rq->cb=cb;rq->url=url;rq->pay=pay?pay:NULL;rq->header=header?header:NULL;rq->data=NULL;rq->n=0;
+	r1(cb);rq->cb=cb;rq->url=url;rq->pay=pay?pay:NULL;rq->header=header?header:NULL;rq->data=NULL;rq->n=0;rq->rc=0;
 	LIST_INSERT_HEAD(&RQH,rq,p);R rq;}
 Z V rqrm(RQ rq){r0(rq->cb);free(rq->url);free(rq->pay);curl_slist_free_all(rq->header);free(rq->data);LIST_REMOVE(rq,p);free(rq);}
 
@@ -36,9 +36,8 @@ Z size_t rscb(S d,size_t n,size_t l,V* p){
 	rq->data=realloc(rq->data,nsz);memcpy(rq->data + rq->n,d,sz);rq->n=nsz;R sz;}
 
 Z K rqcb(I fd){
-	RQ rq;I n=read(fd,&rq,sizeof(RQ));
-	K data=knk(1,kpn(rq->data,rq->n));K res=dot(rq->cb,data);
-	r0(data);rqrm(rq);R res;} 
+	RQ rq;I n=read(fd,&rq,sizeof(RQ));K data=knk(3,kpn(rq->data,rq->n),kj(rq->rc),kj(rq->ec));
+	K res=dot(rq->cb,data);r0(data);rqrm(rq);R res;} 
 
 Z V* rqloop(V* args){
 	fd_set rds,wrs,errs;struct timeval to;I nrun,queued,maxfd,rc;CURLMsg* msg;RQ rq;
@@ -49,12 +48,12 @@ Z V* rqloop(V* args){
 		to.tv_sec=0;to.tv_usec=10000;rc=select(maxfd+1,&rds,NULL,NULL,&to);
 		SW(rc){
 			case -1: break;
-			case 0:
-			default:
+			case 0: default:
 				if(FD_ISSET(rqin[0],&rds)){I nread=read(rqin[0],&rq,sizeof(RQ));curladd(curlm,rq);}
 				else{
 					while((msg=curl_multi_info_read(curlm,&queued))){
-						if(msg->msg==CURLMSG_DONE){CURL* c=msg->easy_handle;gi(c,PRIVATE,&rq);rc=write(rqout[1],&rq,sizeof(RQ));curlrm(curlm,c);}}}
+						if(msg->msg==CURLMSG_DONE){CURL* c=msg->easy_handle;gi(c,PRIVATE,&rq);gi(c,RESPONSE_CODE,&rq->rc);
+							rq->ec=msg->data.result;rc=write(rqout[1],&rq,sizeof(RQ));curlrm(curlm,c);}}}
 				curl_multi_perform(curlm,&nrun);break;}}}
 
 K init(K x){
