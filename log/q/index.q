@@ -1,4 +1,4 @@
-\d .log
+\d .qlog
 h:0N;
 new:{[logname] @[hsym[logname] set;();{[err] :0b}];1b};
 open:{[logname] h::@[hopen;hsym logname;{:0N;}];h};
