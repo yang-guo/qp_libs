@@ -3,6 +3,10 @@
 Hooks into .z.pc and .z.po for better connection handling.  Previous .z.pc and .z.po will be called if they exist after 
 .conn's called are done
 
+## Dependencies
+
+* timer
+
 ## Documentation
 
 All functions are under the namespace .conn
