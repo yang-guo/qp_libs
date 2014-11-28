@@ -6,7 +6,7 @@ Overwrites .z.ts to become a timer based callback function
 
 All functions are under the namespace .timer
 
-There is only one function
+There are three main function
 * _add[callback;interval]_ add a job to the timer and returns jobid
 * _once[callback;interval]_ add a job once to the timer and returns jobid
 * _rm[id]_ remove a job by jobid from the timer
