@@ -11,7 +11,7 @@
 #define so(c,o,v) curl_easy_setopt(c,CURLOPT_##o,v)
 #define gi(c,o,v) curl_easy_getinfo(c,CURLINFO_##o,v)
 Z size_t rscb(S d,size_t n,size_t l,V* p);Z K rqcb(I fd);
-typedef struct curl_slist* CL;Z pthread_t loop;Z I rqin[2],rqout[2],initd;
+typedef struct curl_slist* CL;Z pthread_t loop;Z I rqin[2],rqout[2],initd=0;
 
 typedef struct RQS{S url;S pay;CL header;S data;size_t n;J rc;J ec;C error[CURL_ERROR_SIZE];K cb;LIST_ENTRY(RQS) p;}*RQ;
 Z LIST_HEAD(RQH,RQS)RQH;Z V rqinit(){LIST_INIT(&RQH);}
@@ -61,7 +61,7 @@ K init(K x){
 	rqinit();sd1(rqout[0],rqcb);pthread_create(&loop,NULL,rqloop,NULL);initd=1;}R(K)0;}
 
 K postAsync(K cb,K url,K pay,K header){
-	if(url->t!=KC)R krr("type");if(pay&&pay->t!=KC)R krr("type");
+	if(url->t!=KC)R krr("type");if(pay&&pay->t!=KC)R krr("type");init((K)0);
 	S rqpay=NULL;CL rqheader=NULL;
 	S rqurl=malloc(sizeof(C)*(url->n+1));strncpy(rqurl,kC(url),url->n);rqurl[url->n]=0;
 	if(pay&&pay->n){rqpay=malloc(sizeof(C)*(pay->n+1));strncpy(rqpay,kC(pay),pay->n);rqpay[pay->n]=0;}
