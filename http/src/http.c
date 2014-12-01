@@ -61,7 +61,7 @@ K init(K x){
 	rqinit();sd1(rqout[0],rqcb);pthread_create(&loop,NULL,rqloop,NULL);initd=1;}R(K)0;}
 
 K postAsync(K cb,K url,K pay,K header){
-	if(url->t!=KC)R krr("type");if(pay&&pay->t!=KC)R krr("type");init((K)0);
+	if(url->t!=KC)R krr("type");if(pay&&pay->t!=KC)R krr("type");
 	S rqpay=NULL;CL rqheader=NULL;
 	S rqurl=malloc(sizeof(C)*(url->n+1));strncpy(rqurl,kC(url),url->n);rqurl[url->n]=0;
 	if(pay&&pay->n){rqpay=malloc(sizeof(C)*(pay->n+1));strncpy(rqpay,kC(pay),pay->n);rqpay[pay->n]=0;}
