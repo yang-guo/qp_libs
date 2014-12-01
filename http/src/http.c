@@ -33,7 +33,7 @@ Z V curlrm(CURLM* curlm,CURL* c){curl_multi_remove_handle(curlm,c);curl_easy_cle
 
 Z size_t rscb(S d,size_t n,size_t l,V* p){
 	RQ rq=(RQ)p;size_t sz=n*l;size_t nsz=rq->n+sz;
-	rq->data=realloc(rq->data,nsz);memcpy(rq->data + rq->n,d,sz);rq->n=nsz;R sz;}
+	rq->data=realloc(rq->data,nsz);memcpy(rq->data+rq->n,d,sz);rq->n=nsz;R sz;}
 
 Z K rqcb(I fd){
 	RQ rq;I n=read(fd,&rq,sizeof(RQ));K data=knk(3,kpn(rq->data,rq->n),kj(rq->rc),kj(rq->ec));
