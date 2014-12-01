@@ -9,10 +9,10 @@
 
 K daemonize(K x) {
 	pid_t pid=0;
-	if((pid = fork())<0){R krr("fork");}else if(pid>0){exit(0);}
+	if((pid=fork())<0){R krr("fork");}else if(pid>0){exit(0);}
 	if (setsid()<0){exit(1);}signal(SIGHUP,SIG_IGN);
-	if((pid = fork())<0){exit(1);}else if(pid>0){exit(0);}
+	if((pid=fork())<0){exit(1);}else if(pid>0){exit(0);}
 	if(chdir("/")<0){exit(1);}umask(0);
 	close(STDIN_FILENO);close(STDOUT_FILENO);close(STDERR_FILENO);
-    if(open("/dev/null",O_RDONLY)==-1){exit(1);}if(open("/dev/null",O_WRONLY) == -1){exit(1);}if(open("/dev/null",O_RDWR) == -1){exit(1);}
+    if(open("/dev/null",O_RDONLY)==-1){exit(1);}if(open("/dev/null",O_WRONLY)==-1){exit(1);}if(open("/dev/null",O_RDWR)==-1){exit(1);}
 	R(K)0;}
