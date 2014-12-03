@@ -1,6 +1,6 @@
 \d .quant
 /pi const
-pi:acos -1;pi2:sqrt 2*pi;spi2:sqrt 2*pi;ipi:(%)pi;ispi:(%)sqrt pi;ispi2:(%)sqrt 2*pi;is2:(%)sqrt 2;
+pi:acos -1;pi2:2*pi;spi2:sqrt 2*pi;ipi:(%)pi;ispi:(%)sqrt pi;ispi2:(%)sqrt 2*pi;is2:(%)sqrt 2;
 /hyperoblic functions
 sinh:{0.5*(exp x)-exp(-)x};cosh:{0.5*(exp x)+exp(-)x};tanh:{(e-1)%(e:exp 2*x)+1}
 /gamma functions
