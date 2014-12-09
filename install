@@ -1,2 +1,2 @@
-LIBS="conn crypto daemon http log posix quant sys threads time timer tp"
+LIBS="conn crypto daemon http log posix quant sys threads time timer tp expat"
 for LIB in $LIBS; do qpm.q install $LIB; done
