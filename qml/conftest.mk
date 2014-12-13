@@ -1,0 +1,3 @@
+ifeq "" ""
+all:
+endif

@@ -1,0 +1,26 @@
+
+testing c_compile:
+
+testing c_link:
+
+testing c_link with CFLAGS='-O2 -fno-strict-aliasing':
+
+testing c_link with CFLAGS_FLOAT='-ffloat-store':
+
+testing xc_compile:
+
+testing xc_link:
+
+testing xc_run:
+
+testing f_compile:
+
+testing f_link:
+/usr/bin/ld: skipping incompatible /usr/lib/gcc/x86_64-linux-gnu/4.8/libgfortran.so when searching for -lgfortran
+/usr/bin/ld: skipping incompatible /usr/lib/gcc/x86_64-linux-gnu/4.8/libgfortran.a when searching for -lgfortran
+/usr/bin/ld: cannot find -lgfortran
+/usr/bin/ld: skipping incompatible /usr/lib/gcc/x86_64-linux-gnu/4.8/libgfortran.so when searching for -lgfortran
+/usr/bin/ld: skipping incompatible /usr/lib/gcc/x86_64-linux-gnu/4.8/libgfortran.a when searching for -lgfortran
+/usr/bin/ld: cannot find -lgfortran
+collect2: error: ld returned 1 exit status
+make: *** [test/f_link] Error 1
