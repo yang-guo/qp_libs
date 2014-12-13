@@ -24,3 +24,4 @@ nlopt/nlopt-*/
 debug/*.[chq]
 coverage/*.[chq]
 test/*.pyc
+conftest.*

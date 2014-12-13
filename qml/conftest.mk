@@ -1,3 +1,0 @@
-ifeq "" ""
-all:
-endif
