@@ -2,10 +2,18 @@
 \d .stats
 treg.linear:{[t;y;X;opt]treg.chk[y;X];opt:treg.opt opt;X:X,();linreg[t y;(t X),$[opt`int;(,)((#)t)#1.;()]]}
 treg.ridge:{[t;y;X;opt]treg.chk[y;X];opt:treg.opt opt;X:X,();n:$[opt`int;1;0]+(#)X;linreg[(t y),n#0.;((t X),$[opt`int;(,)((#)t)#1.;()]),'.qml.diag[n#sqrt opt`lambda]]}
+treg.log:{[t;y;X;opt]treg.chk[y;X];opt:treg.opt opt;X:X,();logreg[t y;(t X),$[opt`int;(,)((#)t)#1.;()]]}
 
 treg.dft:`int`lambda!(1b;0.)
 treg.opt:{[opt]if[99h<>(@)opt;:treg.dft];opt,raze {[opt;k](k,())!(,)$[k in(!)opt;opt k;treg.dft k]}[opt]'[(!)treg.dft]}
 treg.chk:{[y;X]if[(0<(@)y)|(11h<>abs(@)y)|(11h<>abs(@)X);'`type];}
+
+
+logreg:{[y;X]
+    if[any[null y:"f"$y]|any{any null x}'[X:"f"$X];'`nulls];
+    if[$[0=m:count X;1;m>n:count X:flip X];'`length];
+    e:y-X mmu b:{[y;X;b]p:{(%)1+exp(-)x$y}[X;b];b+inv[((p*1-p)*/:flip[X])$X]$flip[X]$y-p}[y;X]/[10;m#0.];
+    Z:.qml.minv[flip[X]mmu X];linregtests ``X`y`S`b`e`n`m`df!(::;X;y;Z*mmu[e;e]%n-m;b;e;n;m;n-m)};
 
 linreg:{[y;X]
     if[any[null y:"f"$y]|any{any null x}'[X:"f"$X];'`nulls];
