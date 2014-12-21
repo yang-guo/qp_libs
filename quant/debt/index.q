@@ -5,6 +5,6 @@ ann.int:{[pv;pmt;n]{[pv;pmt;n;int]int-((pv*int)-pmt*(1-(1+int)xexp(-)n))%(pv+pmt
 ann.n:{[pv;pmt;int]log[(%)1-(pv*int)%pmt]%log[1+int]}
 ann.loanschedule:{[pv;pmt;int;n](+)`l`p`i!(+){[i;p;v]ip:v[0]*i;(v[0]-pp;pp:p-ip;ip)}[int;pmt]\[n;(pv;0;0)]}
 
-pvpd:{[pv;pmt;ir;pd;n]sum{[pv;pmt;df;pd;i]((df xexp i)*((1-pd)xexp i-1)*pd*(neg[pv]+pmt* i-1))+(df xexp i)*((1-pd)xexp i)*pmt}[pv;pmt;(%)1+ir;pd]each 1+til n};
+pvpd:{[pv;pmt;ir;hr;n]sum{[pv;pmt;df;hr;i]((df xexp i)*(((1-hr)xexp i-1)*hr*(neg[pv]+pmt*i-1))+((1-hr)xexp i)*pmt}[pv;pmt;(%)1+ir;hr]each 1+til n};
 
 \d .
