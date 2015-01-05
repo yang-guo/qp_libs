@@ -1,0 +1,16 @@
+{
+	"name":"DATABASE_NAME",
+	"server":"SERVER_NAME/IP (OPTIONAL)",
+	"port":1234,
+	"location":"/PATH/TO/DIRECTORY",
+	"tables":{
+		"TABLENAME_1":{
+			"type":"flat|splayed|partitioned|segmented",
+			"schema":{
+				"COLUMN_NAME_1":"TYPE_1",
+				"COLUMN_NAME_2":"TYPE_2",
+				"COLUMN_NAME_3":"TYPE_3"
+			}
+		}
+	}
+}

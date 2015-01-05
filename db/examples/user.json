@@ -1,0 +1,36 @@
+{
+	"name":"users",
+	"server":"127.0.0.1",
+	"port":2222,
+	"location":"/home/yang/db",
+	"tables":{
+		"users":{
+			"type":"flat",
+			"schema":{
+				"username":"C",
+				"age":"j",
+				"income":"f",
+				"state":"s",
+				"registered":"b",
+				"ts_registered":"p"
+			}
+		},
+		"reference":{
+			"type":"spayed",
+			"schema":{
+				"state":"s",
+				"state_name":"C",
+				"year_incorporated":"j"
+			}
+		},
+		"income_history":{
+			"type":"partitioned",
+			"schema":{
+				"date":"d",
+				"time":"t",
+				"username":"C",
+				"income":"f"
+			}
+		}
+	}
+}
