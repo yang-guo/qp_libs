@@ -16,7 +16,7 @@
 			}
 		},
 		"reference":{
-			"type":"spayed",
+			"type":"splayed",
 			"schema":{
 				"state":"s",
 				"state_name":"C",
@@ -27,7 +27,7 @@
 			"type":"partitioned",
 			"schema":{
 				"date":"d",
-				"time":"t",
+				"user_id":"s",
 				"username":"C",
 				"income":"f"
 			}
