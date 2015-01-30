@@ -9,6 +9,12 @@ treg.dft:`int`lambda!(1b;0.)
 treg.opt:{[opt]if[99h<>(@)opt;:treg.dft];opt,raze {[opt;k](k,())!(,)$[k in(!)opt;opt k;treg.dft k]}[opt]'[(!)treg.dft]}
 treg.chk:{[y;X]if[(0<(@)y)|(11h<>abs(@)y)|(11h<>abs(@)X);'`type];}
 
+constrained:{[y;X;Q;c]
+    if[any[null y:"f"$y]|any{any null x}'[X:"f"$X];'`nulls];
+    if[$[0=m:count X;1;m>n:count X:flip X];'`length];Q:flip Q;
+    e:y-X mmu b:(Z:.qml.minv[flip[X]mmu X])mmu flip[X]mmu y;b:b - mmu[Z;Q] mmu .qml.minv[mmu[flip[Q];Z] mmu Q] mmu (mmu[flip[Q];b] - c);
+    linregtests ``X`y`S`b`e`n`m`df!(::;X;y;Z*mmu[e;e]%n-m;b;e;n;m;n-m)};
+
 lasso:{[y;X;l]
     if[any[null y:"f"$y]|any{any null x}'[X:"f"$X];'`nulls];
     if[$[0=m:count X;1;m>n:count X:flip X];'`length];
