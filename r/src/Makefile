@@ -6,9 +6,11 @@ include ./config.mk
 TARGETS 	   := base common rserver
 OUTPUT 		   := r.so
 LIBFILES	   := pthread R
+R_SHARE        := /usr/local/lib/R
 
 OBJECTS = $(foreach TARGET,$(TARGETS),$(TARGET).o)
 LIBS = $(foreach LIB,$(LIBFILES),-l$(LIB))
+INCLUDES=-I. -I$(R_SHARE)/include
 
 all: build
 
