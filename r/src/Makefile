@@ -8,7 +8,7 @@ R_SHARE=/usr/local/lib/R
 REXE=$(R_HOME)/bin/R CMD
 
 INCLUDES=-I. -I$(R_SHARE)/include -I$(R_SHARE)/include/i386 -I$(R_SHARE)/include/x86_64
-LIBS=-lpthread -L$(R_HOME)/lib -lR
+LIBS=-lpthread -L$(R_HOME)/lib -L$(R_HOME)/lib/i386 -L$(R_HOME)/lib/x86_64 -lR
 
 SRC=base.c
 TGT=r.so
