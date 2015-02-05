@@ -1,48 +1,24 @@
-ifeq ($(wildcard ./config.mk),)
-$(error run ./configure first)
-endif
-include ./config.mk
+# linux rserver makefile
 
-TARGETS 	   := base common rserver
-OUTPUT 		   := r.so
-LIBFILES	   := pthread R
-R_SHARE        := /usr/local/lib/R
+CC=gcc
+CFLAGS=-g -O3 -fPIC $(CARCH) -shared -D KXVER=3
 
-OBJECTS = $(foreach TARGET,$(TARGETS),$(TARGET).o)
-LIBS = $(foreach LIB,$(LIBFILES),-l$(LIB))
-INCLUDES=-I. -I$(R_SHARE)/include -I$(R_SHARE)/include/i386
+R_HOME=/usr/local/lib/R
+R_SHARE=/usr/local/lib/R
+REXE=$(R_HOME)/bin/R CMD
 
-all: build
+INCLUDES=-I. -I$(R_SHARE)/include
+LIBS=-lpthread -L$(R_HOME)/lib -lR
 
-######################################
-# DEFAULT COMPILATIONS
-######################################
-# default compilation commands
-# Created depends as .d so that we have automated detection of changes in header files
-%.o: %.cpp
-	$(CXX) $(INCLUDES) $(CFLAGS) $(FLAGS) -c $< -o $@
-	$(CXX) $(INCLUDES) $(CFLAGS) $(FLAGS) -MM $< > $*.d
-	@cp -f $*.d $*.d.tmp
-	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | \
-	  sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
-	@rm -f $*.d.tmp
-%.o: %.c
-	$(CC) $(INCLUDES) $(CFLAGS) $(FLAGS) -c $< -o $@
-	$(CC) $(INCLUDES) $(CFLAGS) $(FLAGS) -MM $< > $*.d
-	@cp -f $*.d $*.d.tmp
-	@sed -e 's/.*://' -e 's/\\$$//' < $*.d.tmp | fmt -1 | \
-	  sed -e 's/^ *//' -e 's/$$/:/' >> $*.d
-	@rm -f $*.d.tmp
+SRC=base.c
+TGT=r.so
 
--include $(OBJECTS:.o=.d)
-
-build: $(OUTPUT)
-$(OUTPUT) : $(OBJECTS)
-	$(CC) $(INCLUDES) $(CFLAGS) $(FLAGS) $(OBJECTS) $(LIBS) -o $(OUTPUT)
+all:
+	$(REXE) $(CC) $(CFLAGS) $(INCLUDES) $(SRC) $(LIBS) -o $(TGT)
 
 clean:
-	rm -f *.o *.so *.d
+	rm -rf $(TGT)
 
-install: 
+install:
 	mkdir -p ../$(KXARCH)
-	cp $(OUTPUT) ../$(KXARCH)
+	cp $(TGT) ../$(KXARCH)
