@@ -1,3 +1,7 @@
+ifeq ($(wildcard ./config.mk),)
+$(error run ./configure first)
+endif
+include ./config.mk
 # linux rserver makefile
 
 CC=gcc
