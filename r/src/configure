@@ -82,6 +82,7 @@ sed 's/\$/$$/g' >config.mk <<MAKEFILE
 KXARCH         := $KXARCH
 KXVER          := $KXVER
 QHOME          := $QHOME
+CARCH		   := $CARCH
 CC             := $CC
 CXX			   := g++
 CFLAGS         := $CFLAGS
