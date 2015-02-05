@@ -7,7 +7,7 @@ R_HOME=/usr/local/lib/R
 R_SHARE=/usr/local/lib/R
 REXE=$(R_HOME)/bin/R CMD
 
-INCLUDES=-I. -I$(R_SHARE)/include
+INCLUDES=-I. -I$(R_SHARE)/include -I$(R_SHARE)/include/i386 -I$(R_SHARE)/include/x86_64
 LIBS=-lpthread -L$(R_HOME)/lib -lR
 
 SRC=base.c
