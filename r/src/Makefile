@@ -10,7 +10,7 @@ R_SHARE        := /usr/local/lib/R
 
 OBJECTS = $(foreach TARGET,$(TARGETS),$(TARGET).o)
 LIBS = $(foreach LIB,$(LIBFILES),-l$(LIB))
-INCLUDES=-I. -I$(R_SHARE)/include
+INCLUDES=-I. -I$(R_SHARE)/include -I$(R_SHARE)/include/i386
 
 all: build
 
