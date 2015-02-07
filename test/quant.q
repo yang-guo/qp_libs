@@ -39,18 +39,18 @@ erf:{
         } each x
     }
 
-// dictionary of standard probability functions
+// Standard CDF's 
 cdf:() ! ()
 cdf[`gauss]:{{$[x<0;1-cdf[`gauss; abs x]];0.5*1+erf x * INVERSESQRT2} each x}
-cdf[`laplace]:{0.5*1+(signum x)*1-exp neg abs x}
-cdf[`logistic]:{reciprocal 1 + exp neg x}
-cdf[`student1]:{reciprocal pi*1+x*x}
-cdf[`student2]:{reciprocal (2+x*x) xexp 1.5}
+/cdf[`laplace]:{0.5*1+(signum x)*1-exp neg abs x}
+/cdf[`logistic]:{reciprocal 1 + exp neg x}
+/cdf[`student1]:{reciprocal pi*1+x*x}
+/cdf[`student2]:{reciprocal (2+x*x) xexp 1.5}
 
 // Misc
-w: {x % sum x}
-odds:{$[(x>=0) & x<1; x % 1-x; `$"invalid input" }
-logodds:{$[(x>=0) & x<1; log x%1-x; x=1; '$"x=1"; `$"invalid input"]}
+/w: {x % sum x}
+/odds:{$[(x>=0) & x<1; x % 1-x; `$"invalid input" }
+/logodds:{$[(x>=0) & x<1; log x%1-x; x=1; '$"x=1"; `$"invalid input"]}
 
 / \d hidden below
 \d .  
