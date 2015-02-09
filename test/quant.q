@@ -1,4 +1,3 @@
-
 \d .quant / \d hidden here
 
 // constants
@@ -34,7 +33,7 @@ erf:{ { negate:x<0;x:abs x; result:0f;
 
 // Standard CDF's 
 cdf:() ! ()
-cdf[`gauss]:   { { $[x<0;1-cdf[`gauss; abs x]; 0.5*1+ erf x* INVERSESQRT2 ]} each x }
+/ cdf[`gauss] qml has an implementation if it
 cdf[`laplace]: { 0.5*1+ (signum x)* 1- exp neg abs x }
 cdf[`logistic]:{ reciprocal 1 + exp neg x }
 cdf[`student1]:{ reciprocal pi*1+x*x }
