@@ -9,14 +9,8 @@ INVERSESQRTPI:reciprocal sqrt pi
 INVERSESQRT2PI:reciprocal sqrt 2.0*pi
 INVERSESQRT2:reciprocal sqrt 2
 
-// hyperbolic functions
-sinh:{0.5*(exp x) - exp neg x}
-cosh:{0.5*(exp x) + exp neg x}
-tanh:{(e-1)%(e:exp 2*x) + 1 } / exp 2x - 1 / exp 2x + 1
-
 // gamma function using Lanczos approx.
 LANCZOS:0.99999999999980993 676.5203681218851 -1259.1392167224028 771.32342877765313 -176.61502916214059 12.507343278686905 -0.13857109526572012 9.9843695780195716e-6 1.5056327351493116e-7
-
 gamma:{
     { $[x=0;0w; x<0.5;pi %(sin pi * x) * gamma 1-x; SQRT2PI*(t xexp x - 0.5)*(exp neg t: x + 6.5)* sum LANCZOS % 1, x + til 8] } each x
     }
@@ -36,12 +30,9 @@ cdf:() ! ()
 / cdf[`gauss] qml has an implementation if it
 cdf[`laplace]: { 0.5*1+ (signum x)* 1- exp neg abs x }
 cdf[`logistic]:{ reciprocal 1 + exp neg x }
-cdf[`student1]:{ reciprocal pi*1+x*x }
-cdf[`student2]:{ reciprocal (2+x*x) xexp 1.5 }
 
 // Misc
 /w: {x % sum x}
 /odds:{$[(x>=0) & x<1; x % 1-x; `$"invalid input" }
-/logodds:{$[(x>=0) & x<1; log x%1-x; x=1; '$"x=1"; `$"invalid input"]}
 
 \d . / End of program 
