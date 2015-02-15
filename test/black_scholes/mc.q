@@ -1,6 +1,7 @@
 .qp.require["qml"]   
 //\l ../../qml/src/qml.q                                                                                                                                                     
 \l ../quant.q / quant.q required. originally from gordon baker gbkr.com
+\l ../stats.q
 \l bls.q
 \d .mc 
 
@@ -59,22 +60,24 @@ create_vecS:{[stk;algo;N] {[x;type_;onesample] S[type_] x } [stk;algo;] each N#0
 stk:(``spot`strike`matur`rate`div`vola)!(::;30.0;30.0;1.0;0.05;0.0;0.20)
 stk[`steps]:100
 
-nPaths:100000
+nPaths:10000
 algo:`euler_logS
 
-\t vecS:create_vecS[stk;algo;nPaths]
-/ \t gaussianRN[`bm_fast]\[stk[`steps]*nPaths;0] / this is as slow as the above command -> not a speed improvement
+\t vecS:create_vecS[stk; algo; nPaths]
+\t gaussianRN[`bm_fast]\[stk[`steps]*nPaths; 0] / as slow as the above command -> not a speed improvement
 / TODO: need a fast generator of random numbers
 
 n:0
 vecC:(count vecS)#0.0
 
-\t while [n<count vecC; vecC[n]:max (vecS[n]- stk[`strike];0.0); n+:1]
+\t while [n< count vecC; vecC[n]:max (vecS[n]- stk[`strike];0.0); n+:1]
+avgC:avg vecC
+stdevC:.stats.stdev vecC
 
 0N! `
 `$"Euler with logS:"
 `$"call price and std error:"
-avg vecC; (stdev vecC) % sqrt count vecC
+avgC, stdevC % sqrt count vecC
 
 / From bls formula
 extra:.bls.bls[`d] stk;

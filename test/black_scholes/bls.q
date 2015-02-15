@@ -49,7 +49,7 @@ extra:bls[`d] msft;
 msft:msft,extra
 msft[`sign]:bls[`sign] `call
 
-if [1=0; 0N! `$"call price:"; bls[`bls] msft;
+if [1=1; 0N! `$"call price:"; bls[`bls] msft;
     0N! `$"delta:"; bls[`delta] msft;
     0N! `$"gamma:"; bls[`gamma] msft;
     0N! `$"theta:"; bls[`theta] msft;
