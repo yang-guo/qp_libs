@@ -1,98 +1,76 @@
 .qp.require["qml"]   
-//\l ../../qml/src/qml.q                                                                                                                                                     
-\l ../quant.q / quant.q required. originally from gordon baker gbkr.com
+                                                                                                                                                
+\l ../quant.q / Originally from gordon baker gbkr.com
 \l ../stats.q
-\l bls.q
-\d .mc 
-
-.qp.require("qml")
+\l rng.q
+\l bls.q / Analytical solutions
 
 \d .mc
 
-// RNG
-uniformRN:{[] (1?1f)[0] }
-
-/ standard normal
-gaussianRN:()!()
-haveNextGaussianRN:0;
-nextGaussianRN:0f;
-gaussianRN[`bm_fast]:{ 
-    // Box-Muller takes two uniform(0,1) RNs and produces 2 standard normal RNs. Only 1 of them is returned, 
-    // We only have to compute them every other time. We cache the second random number
-    compute:1;
-    if [haveNextGaussianRN; compute:0; result:nextGaussianRN; haveNextGaussianRN::0];
-    if [compute; w:1f; 
-        while [w>=1f; x1:(2f*uniformRN[])- 1f; x2:(2f*uniformRN[])- 1f; w:(x1*x1)+ x2*x2]; 
-        w:sqrt (-2f* log w) % w;
-        y1:x1*w;
-        y2:x2*w;
-        nextGaussianRN::y2;
-        haveNextGaussianRN::1;
-        result:y1
-        ];
-        :result
-    }
-
-gaussianRN[`bm_slow]:{ r:last {p:-1+ (2?2.0); xx::p 0; sum p*p}\[1<;2];
-	:xx * sqrt ((-2.0 * log r) % r) 
-	}
-
-// Different algos to create a simulation path
-S:()!()
-S[`euler_s]:{}
+//////////// Different algos to create a simulation path ////////////////
+path:()!()
+path[`euler_s]:{ .qml.nicdf .rng.uniformRN[] }
 
 / Euler method on logS, Tevalla hw 3
-S[`euler_logS]:{[x] spot:x[`spot]; drift:x[`rate]-x[`div]; vola:x[`vola]; matur:x[`matur];
+path[`euler_logS]:{[x;algo] / algo: bm_fast, inverse
+    spot:x[`spot]; drift:x[`rate]-x[`divYld]; vola:x[`vola]; matur:x[`matur];
     steps:x[`steps]; deltat: matur%steps;
-    RNs:gaussianRN[`bm_fast]\[steps;0];
-    delta_logS:(deltat* drift- vola*vola%2.0)+(vola* sqrt deltat)*RNs;
+    RNs:.rng.vec_gaussianRN[algo] steps;
+    delta_logS:(deltat* drift-0.5*vola*vola)+ (vola* sqrt deltat)*RNs;
     :spot* exp sum delta_logS
     }
 
 / Repeat function N times
-create_vecS:{[stk;algo;N] {[x;type_;onesample] S[type_] x } [stk;algo;] each N#0.0 }
+create_vecS:{[stk;algoRN;algo_path;N] helper:{[x;algoRN;algo_path;unused] path[algo_path][x;algoRN] }; 
+    :helper[stk;algoRN;algo_path;] each N#0.0
+    }
 
-///////////////////////////////////////////////////////
-// Testing
+/////////////// Testing /////////////////////
+if [1=0;\]
+
 0N! `
-`$"Start of program:"
+`$"Start of Testing:"
 
-stk:(``spot`strike`matur`rate`div`vola)!(::;30.0;30.0;1.0;0.05;0.0;0.20)
-stk[`steps]:100
+stk:(``spot`strike`matur`rate`divYld`vola)!(::;50.0;50.0;1.0;0.065;0.025;0.7)
+stk[`steps]:12
 
-nPaths:10000
-algo:`euler_logS
+nPaths:`long$1e7
+algoRN:`inverse
 
-\t vecS:create_vecS[stk; algo; nPaths]
-\t gaussianRN[`bm_fast]\[stk[`steps]*nPaths; 0] / as slow as the above command -> not a speed improvement
+\t vecS:create_vecS[stk;algoRN;`euler_logS; nPaths]
+/ \t gaussianRN[`inverse]\[stk[`steps]*nPaths; 0] / test: as slow as the above command -> not a speed improvement
 / TODO: need a fast generator of random numbers
 
-n:0
 vecC:(count vecS)#0.0
+vecP:(count vecS)#0.0
 
+n:0
 \t while [n< count vecC; vecC[n]:max (vecS[n]- stk[`strike];0.0); n+:1]
-avgC:avg vecC
-stdevC:.stats.stdev vecC
+n:0
+while [n< count vecP; vecP[n]:max (stk[`strike]-vecS[n];0.0); n+:1]
 
 0N! `
 `$"Euler with logS:"
 `$"call price and std error:"
-avgC, stdevC % sqrt count vecC
+avg vecC
+.stats.stderr vecC
+
+`$"Put price and std error:"
+avg vecP
+.stats.stderr vecP
 
 / From bls formula
 extra:.bls.bls[`d] stk;
 stk:stk,extra
 stk[`sign]:.bls.bls[`sign] `call
 
-if [1=0; 0N! `; `$"Analytical formula";
-	`$"call price:";
-	.bls.bls[`bls] stk;
-	`$"delta:" ;
-	.bls.bls[`delta] stk;
-	`$"gamma:" ;
-	.bls.bls[`gamma] stk;
-	`$"theta:" ;
-	.bls.bls[`theta] stk
-	]
+0N! `
+`$"Analytical formula"
+`$"call price and put price:"
+.bls.bls[`price] stk
+stk[`sign]:.bls.bls[`sign] `put
+.bls.bls[`price] stk
+
+
 
 \d . / End of program
