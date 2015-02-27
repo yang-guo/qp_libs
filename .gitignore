@@ -1,5 +1,11 @@
-l32/
-l64/
+# Ignore files
 *.o
 *.d
 *.so
+*.swo
+*.swp
+*~
+
+# Ignore folders
+l32/
+l64/
