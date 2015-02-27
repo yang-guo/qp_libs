@@ -26,7 +26,7 @@ path[`1time]:{[x; nPaths; algo] / algo: bm_fast, inverse
 
 path[`heston]:{[x; nSteps; algo] spot:x[`spot]; drift:x[`rate]-x[`divYld]; vola:x[`vola]; 
 	matur:x[`matur]; deltat:x[`deltat];
-	mu:stk[`mu]; kappa:x[`kappa]; theta:x[`theta]; gamma:x[`gamma]; rho:x[`rho];
+	mu:x[`mu]; kappa:x[`kappa]; theta:x[`theta]; gamma:x[`gamma]; rho:x[`rho];
     RNs:(2;0N)#.rng.vec_gaussianRN[algo] 2*nSteps;
     RNs:x[`chol] mmu RNs; // choleski 
     iStep:0;
